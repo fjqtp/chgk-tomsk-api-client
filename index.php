@@ -4,14 +4,14 @@ use MemCachier\MemcacheSASL;
 
 // Create client
 $m = new MemcacheSASL();
-$servers = explode(",", 'mc5.dev.eu-central-1.ec2.memcachier.com:11211');
+$servers = explode(",", getenv('memcachier_server'));
 foreach ($servers as $s) {
     $parts = explode(":", $s);
     $m->addServer($parts[0], $parts[1]);
 }
 
 // Setup authentication
-$m->setSaslAuthData('22f674', '205bf9fdab5d8370424fcefa2e1a53df');
+$m->setSaslAuthData(getenv('memcachier_userid'), getenv('memcachier_password'));
 
 if ($result = $m->get('result_table')){
     echo $result;
