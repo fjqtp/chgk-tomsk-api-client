@@ -1,4 +1,24 @@
 <?
+require 'vendor/autoload.php';
+use MemCachier\MemcacheSASL;
+
+// Create client
+$m = new MemcacheSASL();
+$servers = explode(",", 'mc5.dev.eu-central-1.ec2.memcachier.com:11211');
+foreach ($servers as $s) {
+    $parts = explode(":", $s);
+    $m->addServer($parts[0], $parts[1]);
+}
+
+// Setup authentication
+$m->setSaslAuthData('22f674', '205bf9fdab5d8370424fcefa2e1a53df');
+
+if ($result = $m->get('result_table')){
+    echo $result;
+    exit;
+}
+
+
 $c = curl_init('http://rating.chgk.info/api/teams.json/search?name=&town=%D0%A2%D0%BE%D0%BC%D1%81%D0%BA');
 curl_setopt_array($c, [
     CURLOPT_RETURNTRANSFER => true
@@ -31,6 +51,8 @@ $tournament_ids = [
     ],
 ];
 
+$result_array = [];
+
 foreach ($tournament_ids as $tournament_id => $tournament_data) {
     $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}/list.json");
     curl_setopt_array($c, [
@@ -50,31 +72,31 @@ foreach ($tournament_ids as $tournament_id => $tournament_data) {
 
     krsort($city_results, SORT_NATURAL);
 
-    echo '<h2>';
-    echo $tournament_data['name'];
-    echo '</h2>';
-    echo '<table>';
-    echo '<tbody>';
-    echo '<tr>';
-    echo '<th>';
-    echo 'Команда';
-    echo '</th>';
-    echo '<th>';
-    echo 'Взято';
-    echo '</th>';
+    $result_array[] = '<h2>';
+    $result_array[] = $tournament_data['name'];
+    $result_array[] = '</h2>';
+    $result_array[] = '<table>';
+    $result_array[] = '<tbody>';
+    $result_array[] = '<tr>';
+    $result_array[] = '<th>';
+    $result_array[] = 'Команда';
+    $result_array[] = '</th>';
+    $result_array[] = '<th>';
+    $result_array[] = 'Взято';
+    $result_array[] = '</th>';
     for ($i = 1; $i <= $tournament_data['length']; $i++) {
-        echo '<th>';
-        echo $i;
-        echo '</th>';
+        $result_array[] = '<th>';
+        $result_array[] = $i;
+        $result_array[] = '</th>';
     }
     foreach ($city_results as $city_result) {
-        echo '<tr>';
-        echo '<td>';
-        echo $team_ids[$city_result['idteam']];
-        echo '</td>';
-        echo '<td>';
-        echo $city_result['questions_total'];
-        echo '</td>';
+        $result_array[] = '<tr>';
+        $result_array[] = '<td>';
+        $result_array[] = $team_ids[$city_result['idteam']];
+        $result_array[] = '</td>';
+        $result_array[] = '<td>';
+        $result_array[] = $city_result['questions_total'];
+        $result_array[] = '</td>';
 
         $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}/results/{$city_result['idteam']}");
         curl_setopt_array($c, [
@@ -84,14 +106,18 @@ foreach ($tournament_ids as $tournament_id => $tournament_data) {
         curl_close($c);
         foreach ($team_results as $tour) {
             foreach ($tour['mask'] as $plus) {
-                echo '<td>';
-                echo $plus;
-                echo '</td>';
+                $result_array[] = '<td>';
+                $result_array[] = $plus;
+                $result_array[] = '</td>';
             }
         }
-        echo '</tr>';
+        $result_array[] = '</tr>';
     }
-    echo '</tbody>';
-    echo '</table>';
+    $result_array[] = '</tbody>';
+    $result_array[] = '</table>';
 }
+
+$result = join('', $result_array);
+$m->set('result_table', $result, 7200);
+echo $result;
 ?>

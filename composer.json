@@ -1,0 +1,14 @@
+{
+    "name": "fjqtp/chgk-tomsk-api-client",
+    "authors": [
+        {
+            "name": "Egor A. Druzhinin",
+            "email": "druzhinin.egor@gmail.com"
+        }
+    ],
+    "minimum-stability": "stable",
+    "require": {
+        "php": ">=5.6.0",
+        "memcachier/php-memcache-sasl": "^1.0"
+    }
+}
