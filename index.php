@@ -18,42 +18,40 @@ if ($result = $m->get('result_table')){
     exit;
 }
 
-
-$c = curl_init('http://rating.chgk.info/api/teams.json/search?name=&town=%D0%A2%D0%BE%D0%BC%D1%81%D0%BA');
-curl_setopt_array($c, [
-    CURLOPT_RETURNTRANSFER => true
-]);
-$result = curl_exec($c);
-curl_close($c);
-$result   = json_decode($result, true);
-$items    = $result['items'];
-$team_ids = [];
-foreach ($items as $item) {
-    $team_ids[$item['idteam']] = $item['name'];
+if (!$team_ids = $m->get('team_ids')) {
+    $c = curl_init('http://rating.chgk.info/api/teams.json/search?name=&town=%D0%A2%D0%BE%D0%BC%D1%81%D0%BA');
+    curl_setopt_array($c, [
+        CURLOPT_RETURNTRANSFER => true
+    ]);
+    $result = curl_exec($c);
+    curl_close($c);
+    $result   = json_decode($result, true);
+    $items    = $result['items'];
+    $team_ids = [];
+    foreach ($items as $item) {
+        $team_ids[$item['idteam']] = $item['name'];
+    }
+    $m->set('team_ids', $team_ids, 3600 * 24);
 }
 
 $tournament_ids = [
-    3773 => [
-        'name'   => 'Кубок Квасира',
-        'length' => 36
-    ],
-    3766 => [
-        'name'   => 'Северовенецианский дебют',
-        'length' => 36
-    ],
-    3850 => [
-        'name'   => 'Юрьев день',
-        'length' => 39
-    ],
-    3721 => [
-        'name'   => 'Летний синхронный Умлаут',
-        'length' => 36
-    ],
+    3773,
+    3766,
+    3850,
+    3721,
 ];
 
 $result_array = [];
 
-foreach ($tournament_ids as $tournament_id => $tournament_data) {
+foreach ($tournament_ids as $tournament_id) {
+    $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}");
+    curl_setopt_array($c, [
+        CURLOPT_RETURNTRANSFER => true
+    ]);
+    $tournament_data = json_decode(curl_exec($c), true)[0];
+    curl_close($c);
+    $tournament_data['length'] = $tournament_data['tour_count'] * $tournament_data['tour_questions'];
+
     $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}/list.json");
     curl_setopt_array($c, [
         CURLOPT_RETURNTRANSFER => true
