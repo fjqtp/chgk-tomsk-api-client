@@ -17,7 +17,7 @@ foreach ($servers as $s) {
 // Setup authentication
 $m->setSaslAuthData($memcachier_userid, $memcachier_password);
 
-if ($result = $m->get('result_table')){
+if ($result = $m->get('result_table2')){
     echo $result;
     exit;
 }
