@@ -2,21 +2,25 @@
 require 'vendor/autoload.php';
 use MemCachier\MemcacheSASL;
 
+$memcachier_server = getenv('memcachier_server');
+$memcachier_userid = getenv('memcachier_userid');
+$memcachier_password = getenv('memcachier_password');
+
 // Create client
 $m = new MemcacheSASL();
-$servers = explode(",", getenv('memcachier_server'));
+$servers = explode(",", $memcachier_server);
 foreach ($servers as $s) {
     $parts = explode(":", $s);
     $m->addServer($parts[0], $parts[1]);
 }
 
 // Setup authentication
-$m->setSaslAuthData(getenv('memcachier_userid'), getenv('memcachier_password'));
+$m->setSaslAuthData($memcachier_userid, $memcachier_password);
 
-if ($result = $m->get('result_table')){
+/*if ($result = $m->get('result_table')){
     echo $result;
     exit;
-}
+}*/
 
 if (!$team_ids = $m->get('team_ids')) {
     $c = curl_init('http://rating.chgk.info/api/teams.json/search?name=&town=%D0%A2%D0%BE%D0%BC%D1%81%D0%BA');
@@ -45,7 +49,7 @@ $result_array = [];
 $tournaments_data = $m->get('tournaments_data') ?: [];
 
 foreach ($tournament_ids as $tournament_id) {
-    if (!$tournaments_data[$tournament_id]) {
+    if (!$tournament_data = $tournaments_data[$tournament_id]) {
         $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}");
         curl_setopt_array($c, [
             CURLOPT_RETURNTRANSFER => true
