@@ -42,10 +42,10 @@ $tournament_ids = [
 ];
 
 $result_array = [];
+$tournaments_data = $m->get('tournaments_data') ?: [];
 
 foreach ($tournament_ids as $tournament_id) {
-    $tournament_key = "tournament_{$tournament_id}";
-    if (!$tournament_data = $m->get($tournament_key)) {
+    if (!$tournaments_data[$tournament_id]) {
         $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}");
         curl_setopt_array($c, [
             CURLOPT_RETURNTRANSFER => true
@@ -53,7 +53,8 @@ foreach ($tournament_ids as $tournament_id) {
         $tournament_data = json_decode(curl_exec($c), true)[0];
         $tournament_data['length'] = $tournament_data['tour_count'] * $tournament_data['tour_questions'];
         curl_close($c);
-        $m->set($tournament_key, $tournament_data, 3600 * 24 * 3);
+        $tournaments_data[$tournament_id] = $tournament_data;
+        $m->set('tournaments_data', $tournaments_data, 3600 * 24 * 7);
     }
 
     $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}/list.json");
