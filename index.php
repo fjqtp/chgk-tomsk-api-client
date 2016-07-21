@@ -17,7 +17,7 @@ foreach ($servers as $s) {
 // Setup authentication
 $m->setSaslAuthData($memcachier_userid, $memcachier_password);
 
-if ($result = $m->get('result_table2')){
+if ($result = $m->get('result_table')){
     echo $result;
     exit;
 }
@@ -125,6 +125,6 @@ foreach ($tournament_ids as $tournament_id) {
 }
 
 $result = join('', $result_array);
-$m->set('result_table', $result, 7200);
+$m->set('result_table', $result, 3600 * 2);
 echo $result;
 ?>
