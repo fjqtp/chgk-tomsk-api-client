@@ -39,6 +39,8 @@ if (!$team_ids = $m->get('team_ids')) {
 }
 
 $tournament_ids = [
+    3816,
+    3844,
     3773,
     3766,
     3850,
