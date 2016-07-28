@@ -17,10 +17,10 @@ foreach ($servers as $s) {
 // Setup authentication
 $m->setSaslAuthData($memcachier_userid, $memcachier_password);
 
-if ($result = $m->get('result_table')){
+/*if ($result = $m->get('result_table')){
     echo $result;
     exit;
-}
+}*/
 
 if (!$team_ids = $m->get('team_ids')) {
     $c = curl_init('http://rating.chgk.info/api/teams.json/search?name=&town=%D0%A2%D0%BE%D0%BC%D1%81%D0%BA');
@@ -51,6 +51,14 @@ $result_array = [];
 $tournaments_data = $m->get('tournaments_data') ?: [];
 
 foreach ($tournament_ids as $tournament_id) {
+    $tournament_result_key = 'tournament_result' . $tournament_id;
+    if ($results = $m->get($tournament_result_key)){
+        $result_array[$tournament_id] = $results;
+        continue;
+    }
+
+    $results = [];
+
     if (!$tournament_data = $tournaments_data[$tournament_id]) {
         $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}");
         curl_setopt_array($c, [
@@ -62,6 +70,10 @@ foreach ($tournament_ids as $tournament_id) {
         $tournaments_data[$tournament_id] = $tournament_data;
         $m->set('tournaments_data', $tournaments_data, 3600 * 24 * 7);
     }
+
+    $date_end = new DateTime($tournament_data['date_end']);
+    $days_diff = date_diff($date_end, new DateTime())->d;
+    $cache_duration = $days_diff * 3600;//cache for hours = number of days from the end
 
     $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}/list.json");
     curl_setopt_array($c, [
@@ -81,31 +93,31 @@ foreach ($tournament_ids as $tournament_id) {
 
     krsort($city_results, SORT_NATURAL);
 
-    $result_array[] = '<h2>';
-    $result_array[] = $tournament_data['name'];
-    $result_array[] = '</h2>';
-    $result_array[] = '<table>';
-    $result_array[] = '<tbody>';
-    $result_array[] = '<tr>';
-    $result_array[] = '<th>';
-    $result_array[] = 'Команда';
-    $result_array[] = '</th>';
-    $result_array[] = '<th>';
-    $result_array[] = 'Взято';
-    $result_array[] = '</th>';
+    $results[] = '<h2>';
+    $results[] = $tournament_data['name'];
+    $results[] = '</h2>';
+    $results[] = '<table>';
+    $results[] = '<tbody>';
+    $results[] = '<tr>';
+    $results[] = '<th>';
+    $results[] = 'Команда';
+    $results[] = '</th>';
+    $results[] = '<th>';
+    $results[] = 'Взято';
+    $results[] = '</th>';
     for ($i = 1; $i <= $tournament_data['length']; $i++) {
-        $result_array[] = '<th>';
-        $result_array[] = $i;
-        $result_array[] = '</th>';
+        $results[] = '<th>';
+        $results[] = $i;
+        $results[] = '</th>';
     }
     foreach ($city_results as $city_result) {
-        $result_array[] = '<tr>';
-        $result_array[] = '<td>';
-        $result_array[] = $team_ids[$city_result['idteam']];
-        $result_array[] = '</td>';
-        $result_array[] = '<td>';
-        $result_array[] = $city_result['questions_total'];
-        $result_array[] = '</td>';
+        $results[] = '<tr>';
+        $results[] = '<td>';
+        $results[] = $team_ids[$city_result['idteam']];
+        $results[] = '</td>';
+        $results[] = '<td>';
+        $results[] = $city_result['questions_total'];
+        $results[] = '</td>';
 
         $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}/results/{$city_result['idteam']}");
         curl_setopt_array($c, [
@@ -115,18 +127,23 @@ foreach ($tournament_ids as $tournament_id) {
         curl_close($c);
         foreach ($team_results as $tour) {
             foreach ($tour['mask'] as $plus) {
-                $result_array[] = '<td>';
-                $result_array[] = $plus;
-                $result_array[] = '</td>';
+                $results[] = '<td>';
+                $results[] = $plus;
+                $results[] = '</td>';
             }
         }
-        $result_array[] = '</tr>';
+        $results[] = '</tr>';
     }
-    $result_array[] = '</tbody>';
-    $result_array[] = '</table>';
+    $results[] = '</tbody>';
+    $results[] = '</table>';
+    $result_array[$tournament_id] = $results;
+    $m->set($tournament_result_key, $results, $cache_duration);
 }
 
-$result = join('', $result_array);
+$result = implode('', array_map(function ($entry) {
+    return join('', $entry);
+}, $result_array));
+//$result = join('', $result_array);
 $m->set('result_table', $result, 3600 * 2);
 echo $result;
 ?>
