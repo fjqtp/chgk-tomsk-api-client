@@ -138,6 +138,7 @@ foreach ($tournament_ids as $tournament_id) {
     $results[] = '</tbody>';
     $results[] = '</table>';
     $result_array[$tournament_id] = $results;
+    echo 'caching results for ' . $tournament_id . ': ' . $results;
     $m->set($tournament_result_key, $results, $cache_duration);
 }
 
