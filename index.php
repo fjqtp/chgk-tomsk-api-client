@@ -17,10 +17,10 @@ foreach ($servers as $s) {
 // Setup authentication
 $m->setSaslAuthData($memcachier_userid, $memcachier_password);
 
-/*if ($result = $m->get('result_table')){
+if ($result = $m->get('result_table')){
     echo $result;
     exit;
-}*/
+}
 
 if (!$team_ids = $m->get('team_ids')) {
     $c = curl_init('http://rating.chgk.info/api/teams.json/search?name=&town=%D0%A2%D0%BE%D0%BC%D1%81%D0%BA');
