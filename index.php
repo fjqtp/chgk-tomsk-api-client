@@ -73,6 +73,7 @@ foreach ($tournament_ids as $tournament_id) {
 
     $date_end = new DateTime($tournament_data['date_end']);
     $days_diff = date_diff($date_end, new DateTime())->d;
+    echo 'tournament = ' . $tournament_id . ' days=' . $days_diff . '<br>';
     $cache_duration = max($days_diff, 1) * 3600;//cache for hours = number of days from the end
 
     $c = curl_init("http://rating.chgk.info/api/tournaments/{$tournament_id}/list.json");
