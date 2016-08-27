@@ -30,6 +30,7 @@ if (!$team_ids = $m->get('team_ids')) {
     $result = curl_exec($c);
     curl_close($c);
     $result   = json_decode($result, true);
+    error_log($result);
     $items    = $result['items'];
     $team_ids = [];
     foreach ($items as $item) {
@@ -80,7 +81,9 @@ foreach ($tournament_ids as $tournament_id) {
     curl_setopt_array($c, [
         CURLOPT_RETURNTRANSFER => true
     ]);
-    $tournament_results = json_decode(curl_exec($c), true);
+    $result = curl_exec($c);
+    error_log($result);
+    $tournament_results = json_decode($result, true);
     curl_close($c);
 
     $city_results = [];
